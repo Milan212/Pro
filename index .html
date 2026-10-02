@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milan M. Joseph - 3D Portfolio & Visual Artist</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            cyan: '#00f2fe',
+                            blue: '#4facfe',
+                            purple: '#7f00ff',
+                            dark: '#0a0a12',
+                            panel: 'rgba(15, 18, 30, 0.65)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Three.js & Lucide Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #06070c;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism background styles */
+        .glass-panel {
+            background: rgba(13, 16, 27, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: rgba(22, 27, 46, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(30, 38, 64, 0.65);
+            border-color: rgba(0, 242, 254, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -10px rgba(0, 242, 254, 0.2);
+        }
+
+        /* Canvas background overlay */
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #06070c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f293d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 20px rgba(0, 242, 254, 0.5);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #00c6ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glow-border {
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+    </style>
+</head>
+<body class="relative min-h-screen text-slate-100 selection:bg-brand-cyan selection:text-black">
+
+    <div id="webgl-container"></div>
+
+    <header class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-8 py-4">
+        <nav class="max-w-7xl mx-auto glass-panel rounded-2xl px-6 py-3.5 flex items-center justify-between transition-all">
+            <a href="#hero" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-cyan to-brand-purple flex items-center justify-center font-black text-slate-900 text-xl group-hover:scale-105 transition-transform">
+                    M
+                </div>
+                <div>
+                    <span class="font-extrabold text-lg tracking-wider block leading-none">MILAN M. JOSEPH</span>
+                    <span class="text-[10px] tracking-widest text-brand-cyan font-mono uppercase">3D & Visual Media</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+                <a href="#profile" class="hover:text-brand-cyan transition-colors">Profile</a>
+                <a href="#skills" class="hover:text-brand-cyan transition-colors">Skills</a>
+                <a href="#experience" class="hover:text-brand-cyan transition-colors">Experience</a>
+                <a href="#software" class="hover:text-brand-cyan transition-colors">Software</a>
+                <a href="#education" class="hover:text-brand-cyan transition-colors">Education</a>
+                <a href="#contact" class="hover:text-brand-cyan transition-colors">Contact</a>
+            </div>
+
+            <!-- Action Button -->
+            <div class="hidden sm:flex items-center gap-3">
+                <a href="mailto:mathewmilan00@gmail.com" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-semibold text-sm transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 flex items-center gap-2">
+                    <i class="fa-regular fa-paper-plane"></i> Hire Me
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden text-slate-300 hover:text-white text-xl p-2">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
+        </nav>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden max-w-7xl mx-auto mt-2 glass-panel rounded-2xl p-6 flex flex-col gap-4 text-center text-sm font-medium">
+            <a href="#profile" class="hover:text-brand-cyan py-1">Profile</a>
+            <a href="#skills" class="hover:text-brand-cyan py-1">Skills</a>
+            <a href="#experience" class="hover:text-brand-cyan py-1">Experience</a>
+            <a href="#software" class="hover:text-brand-cyan py-1">Software</a>
+            <a href="#education" class="hover:text-brand-cyan py-1">Education</a>
+            <a href="#contact" class="hover:text-brand-cyan py-1">Contact</a>
+            <a href="mailto:mathewmilan00@gmail.com" class="mt-2 w-full py-3 rounded-xl bg-brand-cyan text-slate-950 font-bold">
+                Get In Touch
+            </a>
+        </div>
+    </header>
+
+    <main class="relative z-10 pt-28 px-4 sm:px-8 max-w-7xl mx-auto space-y-28 pb-20">
+
+        <section id="hero" class="min-h-[85vh] flex flex-col justify-center items-start pt-10">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-brand-cyan text-xs font-mono mb-6 border border-brand-cyan/20">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                <span>3D GENERALIST • VIDEOGRAPHER • VFX ARTIST</span>
+            </div>
+            
+            <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none mb-6">
+                MILAN M. <br />
+                <span class="gradient-text glow-text">JOSEPH</span>
+            </h1>
+
+            <p class="text-lg sm:text-xl text-slate-300 max-w-2xl font-light mb-8 leading-relaxed">
+                Animation & Digital Media Specialist focused on <span class="text-white font-medium">3D integration, cinematography, VFX</span>, and post-production storytelling.
+            </p>
+
+            <div class="flex flex-wrap gap-4 items-center">
+                <a href="#experience" class="px-8 py-4 rounded-xl bg-slate-100 hover:bg-white text-slate-950 font-bold text-sm tracking-wide transition-all shadow-xl hover:scale-105 flex items-center gap-3">
+                    View Work Experience <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a href="#contact" class="px-8 py-4 rounded-xl glass-panel hover:bg-white/10 text-white font-semibold text-sm transition-all border border-white/10 hover:border-brand-cyan/50 flex items-center gap-2">
+                    <i class="fa-solid fa-envelope"></i> Contact Info
+                </a>
+            </div>
+
+            <!-- Hint box for 3D interaction -->
+            <div class="mt-16 inline-flex items-center gap-3 text-xs text-slate-400 font-mono bg-slate-900/40 px-4 py-2 rounded-lg border border-white/5">
+                <i class="fa-solid fa-hand-pointer text-brand-cyan animate-bounce"></i>
+                <span>Tip: Move mouse to shift camera • Click or hover floating 3D objects to interact!</span>
+            </div>
+        </section>
+
+        <section id="profile" class="scroll-mt-28">
+            <div class="glass-panel rounded-3xl p-8 sm:p-12 relative overflow-hidden">
+                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-3 h-8 bg-brand-cyan rounded-full"></div>
+                    <h2 class="text-3xl font-extrabold tracking-tight">PROFILE OVERVIEW</h2>
+                </div>
+
+                <p class="text-slate-300 text-lg sm:text-xl leading-relaxed font-light mb-8">
+                    Animation & Digital Media student with hands-on experience in <strong class="text-white font-semibold">videography, photography, cinematography, video editing, VFX, and visual content production</strong>. Experienced across the creative process from planning and shooting to editing, color grading, compositing, and final delivery. Strong understanding of visual composition, lighting, framing, and visual storytelling. Proficient in Blender, After Effects, Premiere Pro, and DaVinci Resolve.
+                </p>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-white/10">
+                    <div class="p-4 rounded-2xl glass-card">
+                        <div class="text-brand-cyan font-mono text-2xl font-bold mb-1">3rd Year</div>
+                        <div class="text-xs text-slate-400 font-medium">Degree Status</div>
+                    </div>
+                    <div class="p-4 rounded-2xl glass-card">
+                        <div class="text-brand-cyan font-mono text-2xl font-bold mb-1">3D / VFX</div>
+                        <div class="text-xs text-slate-400 font-medium">Core Focus</div>
+                    </div>
+                    <div class="p-4 rounded-2xl glass-card">
+                        <div class="text-brand-cyan font-mono text-2xl font-bold mb-1">Full-Suite</div>
+                        <div class="text-xs text-slate-400 font-medium">Post Production</div>
+                    </div>
+                    <div class="p-4 rounded-2xl glass-card">
+                        <div class="text-brand-cyan font-mono text-2xl font-bold mb-1">4+ Core</div>
+                        <div class="text-xs text-slate-400 font-medium">Industry Tools</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="skills" class="scroll-mt-28">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-3 h-8 bg-brand-purple rounded-full"></div>
+                <h2 class="text-3xl font-extrabold tracking-tight">KEY SKILLS & SPECIALIZATIONS</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Skill Category 1 -->
+                <div class="glass-card rounded-2xl p-7 relative group">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Photography & Videography</h3>
+                    <p class="text-sm text-slate-400 mb-4 leading-relaxed">
+                        Comprehensive knowledge of camera setup, manual exposures, dynamic framing, and lighting for both stills and motion.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Photography</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Videography</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Camera Operation</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Framing & Composition</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Lighting</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Shot Planning</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Visual Storytelling</span>
+                    </div>
+                </div>
+
+                <!-- Skill Category 2 -->
+                <div class="glass-card rounded-2xl p-7 relative group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-cubes"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">3D & Visual Effects</h3>
+                    <p class="text-sm text-slate-400 mb-4 leading-relaxed">
+                        Integrating 3D elements into live-action footage with precise tracking, green screen keying, and rotoscoping.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Blender</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">3D Animation</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Rotoscoping</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Keying</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Motion Tracking</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">3D Integration</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Visual Effects</span>
+                    </div>
+                </div>
+
+                <!-- Skill Category 3 -->
+                <div class="glass-card rounded-2xl p-7 relative group">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-film"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Video & Post-Production</h3>
+                    <p class="text-sm text-slate-400 mb-4 leading-relaxed">
+                        Complete post-production workflow, from non-linear editing and motion graphics to advanced color grading.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Video Editing</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Color Grading</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">After Effects</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Premiere Pro</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">DaVinci Resolve</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Motion Graphics</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Compositing</span>
+                    </div>
+                </div>
+
+                <!-- Skill Category 4 -->
+                <div class="glass-card rounded-2xl p-7 relative group">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Creative & Production</h3>
+                    <p class="text-sm text-slate-400 mb-4 leading-relaxed">
+                        Conceptualizing visual themes and collaborating within dynamic production teams to bring ideas to reality.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Content Creation</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Creative Concepts</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Visual Direction</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Production Planning</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Collaborative Work</span>
+                        <span class="px-3 py-1 rounded-lg text-xs font-mono bg-white/5 border border-white/10 text-slate-300">Attention to Detail</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="experience" class="scroll-mt-28">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-3 h-8 bg-brand-cyan rounded-full"></div>
+                <h2 class="text-3xl font-extrabold tracking-tight">CREATIVE PRODUCTION EXPERIENCE</h2>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-8 sm:p-10 relative">
+                <div class="space-y-6 border-l-2 border-brand-cyan/30 pl-6 sm:pl-8 ml-2">
+                    
+                    <!-- Item 1 -->
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-brand-cyan ring-4 ring-slate-900 group-hover:scale-125 transition-transform"></div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-brand-cyan transition-colors">Filmmaking & Short-Form Collaborations</h3>
+                        <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+                            Collaborated with student filmmakers on short-form film and video productions across different stages of production.
+                        </p>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-blue-400 ring-4 ring-slate-900 group-hover:scale-125 transition-transform"></div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">Camera Operations & Shot Execution</h3>
+                        <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+                            Worked with cameras to plan and execute shots based on visual and storytelling requirements.
+                        </p>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-purple-400 ring-4 ring-slate-900 group-hover:scale-125 transition-transform"></div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">Full Post-Production Editing Workflow</h3>
+                        <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+                            Produced and edited video content using <strong class="text-white">Premiere Pro, After Effects, and DaVinci Resolve</strong>.
+                        </p>
+                    </div>
+
+                    <!-- Item 4 -->
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-emerald-400 ring-4 ring-slate-900 group-hover:scale-125 transition-transform"></div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">Color Grading & Visual Tone</h3>
+                        <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+                            Applied color correction and grading to improve the overall visual consistency and mood of footage.
+                        </p>
+                    </div>
+
+                    <!-- Item 5 -->
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-cyan-400 ring-4 ring-slate-900 group-hover:scale-125 transition-transform"></div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">VFX & Compositing Pipeline</h3>
+                        <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+                            Worked with VFX and compositing techniques including <strong class="text-white">keying, tracking, rotoscoping, and 3D integration</strong>.
+                        </p>
+                    </div>
+
+                    <!-- Item 6 -->
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-pink-400 ring-4 ring-slate-900 group-hover:scale-125 transition-transform"></div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-pink-400 transition-colors">Visual Storytelling & Framing</h3>
+                        <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+                            Applied knowledge of framing, composition, lighting, and visual storytelling to create visually engaging footage.
+                        </p>
+                    </div>
+
+                    <!-- Item 7 -->
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-indigo-400 ring-4 ring-slate-900 group-hover:scale-125 transition-transform"></div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors">End-to-End Creative Delivery</h3>
+                        <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+                            Contributed across shooting, editing, VFX, and final delivery while working within small creative teams.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="software" class="scroll-mt-28">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-3 h-8 bg-brand-purple rounded-full"></div>
+                <h2 class="text-3xl font-extrabold tracking-tight">SOFTWARE PROFICIENCY</h2>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <!-- Blender -->
+                <div class="glass-card rounded-2xl p-6 text-center group hover:border-orange-500/50">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-cubes-stacked"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Blender</h3>
+                    <p class="text-xs text-slate-400 mt-1">3D Modeling & Visual FX</p>
+                </div>
+
+                <!-- After Effects -->
+                <div class="glass-card rounded-2xl p-6 text-center group hover:border-purple-500/50">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Adobe After Effects</h3>
+                    <p class="text-xs text-slate-400 mt-1">VFX, Motion Graphics & Keying</p>
+                </div>
+
+                <!-- Premiere Pro -->
+                <div class="glass-card rounded-2xl p-6 text-center group hover:border-blue-500/50">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-photo-film"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Adobe Premiere Pro</h3>
+                    <p class="text-xs text-slate-400 mt-1">Video Editing & Assembly</p>
+                </div>
+
+                <!-- DaVinci Resolve -->
+                <div class="glass-card rounded-2xl p-6 text-center group hover:border-pink-500/50">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-pink-500/10 text-pink-400 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">DaVinci Resolve</h3>
+                    <p class="text-xs text-slate-400 mt-1">Color Grading & Correction</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="education" class="scroll-mt-28">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-3 h-8 bg-brand-cyan rounded-full"></div>
+                <h2 class="text-3xl font-extrabold tracking-tight">EDUCATION & ACADEMICS</h2>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-8 sm:p-10 relative overflow-hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-white/10">
+                    <div>
+                        <span class="text-xs font-mono text-brand-cyan uppercase tracking-widest">University Degree</span>
+                        <h3 class="text-2xl font-bold text-white mt-1">ST. JOSEPH'S UNIVERSITY</h3>
+                        <p class="text-slate-300 font-medium">Bachelor's Degree — Animation & Digital Media</p>
+                    </div>
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan font-mono text-sm self-start md:self-auto">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>Current: Third Year</span>
+                    </div>
+                </div>
+
+                <h4 class="text-xs font-mono uppercase tracking-wider text-slate-400 mb-3">Relevant Course Areas:</h4>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">3D Animation</span>
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">VFX</span>
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">Cinematography</span>
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">Photography</span>
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">Film & Video Production</span>
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">Post-Production</span>
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">Color Grading</span>
+                    <span class="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-200">Digital Media</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="scroll-mt-28">
+            <div class="glass-panel rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden border border-brand-cyan/30">
+                <div class="max-w-2xl mx-auto">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Let's Collaborate On Your Next Project</h2>
+                    <p class="text-slate-300 text-sm sm:text-base mb-8">
+                        Interested in videography, 3D integration, VFX work, or post-production editing? Feel free to reach out directly.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                        <a href="tel:8123182604" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl glass-card hover:bg-white/10 text-white font-medium flex items-center justify-center gap-3 border border-white/10">
+                            <i class="fa-solid fa-phone text-brand-cyan"></i> 8123182604
+                        </a>
+                        <a href="mailto:mathewmilan00@gmail.com" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-brand-cyan to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-envelope"></i> mathewmilan00@gmail.com
+                        </a>
+                    </div>
+
+                    <div class="text-xs text-slate-500 font-mono">
+                        Professional Interests: Photography • Videography • Cinematography • Video Editing • VFX • 3D Animation • Visual Content • Creative Production
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        let scene, camera, renderer;
+        let interactiveObjects = [];
+        let particles, particleGeo;
+        let raycaster, mouse;
+        let targetX = 0, targetY = 0;
+        let pointLight, spotLight;
+
+        window.onload = function() {
+            initThree();
+            animate();
+        };
+
+        function initThree() {
+            const container = document.getElementById('webgl-container');
+
+            // 1. Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x06070c, 0.025);
+
+            // 2. Camera setup
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 25;
+
+            // 3. Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            container.appendChild(renderer.domElement);
+
+            // 4. Lighting setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            pointLight = new THREE.PointLight(0x00f2fe, 3, 50);
+            pointLight.position.set(0, 0, 10);
+            scene.add(pointLight);
+
+            spotLight = new THREE.SpotLight(0x7f00ff, 4);
+            spotLight.position.set(15, 20, 15);
+            spotLight.angle = Math.PI / 4;
+            spotLight.penumbra = 0.8;
+            scene.add(spotLight);
+
+            // 5. Create Background Particles Grid
+            createParticleBackground();
+
+            // 6. Create Interactive 3D Objects
+            create3DObjects();
+
+            // 7. Raycasting & Mouse Track
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2(-100, -100);
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize, false);
+            window.addEventListener('mousemove', onMouseMove, false);
+            window.addEventListener('click', onClick, false);
+
+            // Mobile menu toggle logic
+            const mobileBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileBtn) {
+                mobileBtn.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        }
+
+        function createParticleBackground() {
+            const count = 1200;
+            particleGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            const color1 = new THREE.Color(0x00f2fe);
+            const color2 = new THREE.Color(0x7f00ff);
+
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 80;
+                positions[i + 1] = (Math.random() - 0.5) * 80;
+                positions[i + 2] = (Math.random() - 0.5) * 60 - 10;
+
+                const mixedColor = color1.clone().lerp(color2, Math.random());
+                colors[i] = mixedColor.r;
+                colors[i + 1] = mixedColor.g;
+                colors[i + 2] = mixedColor.b;
+            }
+
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.25,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+        }
+
+        function create3DObjects() {
+            const geometries = [
+                new THREE.IcosahedronGeometry(1.8, 0),
+                new THREE.TorusKnotGeometry(1.2, 0.4, 100, 16),
+                new THREE.OctahedronGeometry(1.6, 0),
+                new THREE.BoxGeometry(2, 2, 2),
+                new THREE.TorusGeometry(1.6, 0.3, 16, 100)
+            ];
+
+            const materials = [
+                new THREE.MeshStandardMaterial({ color: 0x00f2fe, roughness: 0.2, metalness: 0.8, wireframe: true }),
+                new THREE.MeshStandardMaterial({ color: 0x7f00ff, roughness: 0.3, metalness: 0.6 }),
+                new THREE.MeshStandardMaterial({ color: 0x4facfe, roughness: 0.1, metalness: 0.9, wireframe: true }),
+                new THREE.MeshStandardMaterial({ color: 0x00c6ff, roughness: 0.4, metalness: 0.5 }),
+                new THREE.MeshStandardMaterial({ color: 0x3a7bd5, roughness: 0.2, metalness: 0.8 })
+            ];
+
+            // Position interactive objects floating around hero/sides
+            const positions = [
+                { x: 12, y: 6, z: 0 },
+                { x: -13, y: 2, z: -2 },
+                { x: 14, y: -8, z: -4 },
+                { x: -11, y: -10, z: -1 },
+                { x: 0, y: 12, z: -8 }
+            ];
+
+            for (let i = 0; i < positions.length; i++) {
+                const mesh = new THREE.Mesh(geometries[i % geometries.length], materials[i % materials.length].clone());
+                mesh.position.set(positions[i].x, positions[i].y, positions[i].z);
+                
+                // Store base animation data
+                mesh.userData = {
+                    baseX: positions[i].x,
+                    baseY: positions[i].y,
+                    rotSpeedX: (Math.random() - 0.5) * 0.02,
+                    rotSpeedY: (Math.random() - 0.5) * 0.02,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    originalColor: mesh.material.color.getHex()
+                };
+
+                scene.add(mesh);
+                interactiveObjects.push(mesh);
+            }
+        }
+
+        function onMouseMove(event) {
+            // Normalized device coordinates
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            targetX = mouse.x * 3;
+            targetY = mouse.y * 3;
+
+            // Move dynamic light with cursor
+            if (pointLight) {
+                pointLight.position.x = mouse.x * 20;
+                pointLight.position.y = mouse.y * 20;
+            }
+        }
+
+        function onClick(event) {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactiveObjects);
+
+            if (intersects.length > 0) {
+                const obj = intersects[0].object;
+                
+                // Scale pop effect
+                obj.scale.set(1.5, 1.5, 1.5);
+                setTimeout(() => obj.scale.set(1, 1, 1), 300);
+
+                // Flash color
+                obj.material.color.setHex(0xffffff);
+                setTimeout(() => {
+                    obj.material.color.setHex(obj.userData.originalColor);
+                }, 400);
+
+                // Create mini particle burst
+                createBurst(obj.position);
+            }
+        }
+
+        function createBurst(position) {
+            const count = 30;
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(count * 3);
+            const vel = [];
+
+            for (let i = 0; i < count; i++) {
+                pos[i * 3] = position.x;
+                pos[i * 3 + 1] = position.y;
+                pos[i * 3 + 2] = position.z;
+
+                vel.push(
+                    (Math.random() - 0.5) * 0.3,
+                    (Math.random() - 0.5) * 0.3,
+                    (Math.random() - 0.5) * 0.3
+                );
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({ size: 0.3, color: 0x00f2fe, transparent: true, opacity: 1 });
+            const burst = new THREE.Points(geo, mat);
+            scene.add(burst);
+
+            let opacity = 1;
+            const burstAnim = setInterval(() => {
+                const p = burst.geometry.attributes.position.array;
+                for (let i = 0; i < count; i++) {
+                    p[i * 3] += vel[i].x;
+                    p[i * 3 + 1] += vel[i].y;
+                    p[i * 3 + 2] += vel[i].z;
+                }
+                burst.geometry.attributes.position.needsUpdate = true;
+                opacity -= 0.05;
+                mat.opacity = opacity;
+
+                if (opacity <= 0) {
+                    clearInterval(burstAnim);
+                    scene.remove(burst);
+                }
+            }, 30);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.001;
+
+            // Smooth Camera Parallax Effect
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (-targetY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+
+            // Rotate particle cloud slowly
+            if (particles) {
+                particles.rotation.y = time * 0.03;
+                particles.rotation.x = time * 0.015;
+            }
+
+            // Raycasting hover check
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactiveObjects);
+
+            interactiveObjects.forEach((obj) => {
+                // Base float animation
+                obj.position.y = obj.userData.baseY + Math.sin(time * 1.5 + obj.userData.floatOffset) * 0.5;
+                obj.rotation.x += obj.userData.rotSpeedX;
+                obj.rotation.y += obj.userData.rotSpeedY;
+
+                // Highlight hovered object
+                if (intersects.length > 0 && intersects[0].object === obj) {
+                    obj.rotation.x += 0.03;
+                    obj.rotation.y += 0.03;
+                    document.body.style.cursor = 'pointer';
+                } else {
+                    document.body.style.cursor = 'default';
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
